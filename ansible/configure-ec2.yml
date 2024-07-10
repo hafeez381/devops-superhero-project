@@ -1,74 +1,44 @@
-name: Provision t2.micro EC2
+- name: Configure EC2 instance
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+      tags:
+        - docker
+        - docker-compose
 
-on:
-  push:
-    branches: [ "main", "dev" ]
-  pull_request:
-  workflow_dispatch:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+  
+    # Start Docker service and ensure it's enabled on boot
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
 
-    defaults:
-      run:
-        shell: bash
+    # Add user to the Docker group to allow non-root Docker usage
+    - name: Add user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
 
-    steps:
-      # Checkout the repository to the GitHub Actions runner
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    # Copy Docker Compose file to the EC2 instance
+    - name: Copy Docker Compose file
+      copy:
+        src: docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
 
-      # Install the latest version of Terraform CLI
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: '1.0.3'
-
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.TF_USER_AWS_KEY }}
-          aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
-          aws-region: us-east-1
-
-      # Initialize a new or existing Terraform working directory
-      - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init
-
-      # Generate an execution plan for Terraform
-      - name: Terraform Plan
-        working-directory: ./terraform
-        run: terraform plan -input=false
-
-      # Apply the generated plan
-      - name: Terraform Apply
-        working-directory: ./terraform
-        run: terraform apply -auto-approve
-
-      # Save EC2 Public IP
-      - name: Save EC2 Public IP
-        id: save-ec2-ip
-        working-directory: ./terraform
-        run: |
-          echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
-
-      # Generate inventory.ini
-      - name: Generate inventory.ini
-        run: |
-          echo "[jenkins]" > ./ansible/inventory.ini
-          echo "${{ env.EC2_PUBLIC_IP }} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/tmp/private-key.pem" >> ./ansible/inventory.ini
-
-      # Decode SSH private key and set permissions
-      - name: Decode SSH private key
-        run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
-
-      - name: Set permissions for SSH private key
-        run: chmod 600 /tmp/private-key.pem
-
-      # Ansible configuration
-      - name: Run Ansible Playbook
-        working-directory: ./ansible
-        run: ansible-playbook -i inventory.ini configure-ec2.yml
+    - name: Deploy Docker containers
+      command: docker-compose -f /home/ubuntu/docker-compose.yml up -d
