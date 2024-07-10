@@ -1,23 +1,44 @@
 name: Provision t2.micro EC2
 
+
 on:
-    workflow_dispatch:
-
-
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+  
 jobs:
   terraform:
     runs-on: ubuntu-latest
+  
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+        run:
+          shell: bash
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    # Checkout the repository to the GitHub Actions runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.0.0
+    # Install the latest version of Terraform CLI
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+      
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Terraform Init
-      run: terraform init
+    # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Terraform Format
+        run: terraform fmt -check
 
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+    # Generates an execution plan for Terraform
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.TF_USER_AWS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_USER_AWS_SECRET }}
