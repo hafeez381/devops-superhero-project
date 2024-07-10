@@ -16,22 +16,16 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "public_subnets" {
-  description = "List of public subnet CIDR blocks"
-  type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+variable "public_subnet_cidr" {
+  description = "CIDR block for the public subnet"
+  type        = string
+  default     = "10.0.1.0/24"
 }
 
-variable "private_subnets" {
-  description = "List of private subnet CIDR blocks"
-  type        = list(string)
-  default     = ["10.0.3.0/24", "10.0.4.0/24"]
-}
-
-variable "availability_zones" {
-  description = "List of availability zones"
-  type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+variable "availability_zone" {
+  description = "Availability zone"
+  type        = string
+  default     = "us-east-1a"
 }
 
 variable "instance_type" {
@@ -86,15 +80,32 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_subnet" "public" {
-  count = length(var.public_subnets)
   vpc_id            = aws_vpc.devops_hero_vpc.id
-  cidr_block        = var.public_subnets[count.index]
-  availability_zone = element(var.availability_zones, count.index)
+  cidr_block        = var.public_subnet_cidr
+  availability_zone = var.availability_zone
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "PublicSubnet-${count.index + 1}"
+    Name = "PublicSubnet"
   }
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.devops_hero_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "PublicRouteTable"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
 }
 
 resource "aws_security_group" "ec2_security_group" {
@@ -121,8 +132,8 @@ resource "aws_instance" "jenkins_instance" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   key_name               = var.key_name
-  subnet_id              = element(aws_subnet.public.*.id, 0)
-  security_groups        = [aws_security_group.ec2_security_group.name]
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
 
   tags = {
