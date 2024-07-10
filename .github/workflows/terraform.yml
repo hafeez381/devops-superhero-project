@@ -36,6 +36,14 @@ jobs:
       # Decode SSH private key and set permissions
       - name: Decode SSH private key
         run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install Ansible
+        run: pip install ansible
 
       - name: Set permissions for SSH private key
         run: chmod 600 /tmp/private-key.pem
@@ -54,6 +62,10 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
+      
+      - name: Terraform Pull
+        working-directory: terraform
+        run: terraform state pull
 
       # Save EC2 Public IP
       - name: Save EC2 Public IP
@@ -65,4 +77,4 @@ jobs:
       # Ansible configuration
       - name: Run Ansible Playbook
         working-directory: ./ansible
-        run: ansible-playbook -i ../terraform/inventory configure-ec2.yml
+        run: ansible-playbook -i inventory.yml configure-ec2.yml

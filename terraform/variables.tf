@@ -33,3 +33,9 @@ variable "ssh_access_cidr" {
   type        = string
   default     = "0.0.0.0/0" 
 }
+
+variable "ssh_private_key" {
+  description = "The SSH private key"
+  type        = string
+  sensitive   = true
+}
