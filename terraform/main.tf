@@ -53,6 +53,12 @@ variable "your_ip" {
   default     = "125.209.112.99/32"
 }
 
+variable "ssh_private_key_path" {
+  description = "The path to the SSH private key for accessing the EC2 instance"
+  type        = string
+  sensitive   = true
+}
+
 # Fetch the most recent Ubuntu 20.04 LTS AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -204,18 +210,25 @@ resource "aws_instance" "devops_hero_instance" {
   instance_type = var.instance_type
   subnet_id     = aws_subnet.devops_hero_public_subnet_1.id
   key_name      = var.key_name
-
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
   tags = {
     Name = "DevOpsHeroInstance"
   }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      ansible-playbook -i '${self.public_ip},' --private-key ${var.ssh_private_key_path} configure-ec2.yml
+    EOT
+  }
 }
 
+# Output the VPC ID
 output "vpc_id" {
   value = aws_vpc.devops_hero_vpc.id
 }
 
+# Output the public IP of the EC2 instance
 output "ec2_public_ip" {
   value = aws_instance.devops_hero_instance.public_ip
 }
