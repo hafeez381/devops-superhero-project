@@ -1,0 +1,44 @@
+- name: Configure EC2 instance
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+      tags:
+        - docker
+        - docker-compose
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+  
+    # Start Docker service and ensure it's enabled on boot
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # Add user to the Docker group to allow non-root Docker usage
+    - name: Add user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    # Copy Docker Compose file to the EC2 instance
+    - name: Copy Docker Compose file
+      copy:
+        src: docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
+
+    - name: Deploy Docker containers
+      command: docker-compose -f /home/ubuntu/docker-compose.yml up -d
