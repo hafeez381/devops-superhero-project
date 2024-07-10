@@ -1,49 +1,14 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
 terraform {
-  backend "s3" {
-    bucket = "devops-superhero-bucket"
-    key    = "terraform/state"
-    region = "us-east-1"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 
-variable "vpc_cidr" {
-  description = "The CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "public_subnet_cidr" {
-  description = "CIDR block for the public subnet"
-  type        = string
-  default     = "10.0.1.0/24"
-}
-
-variable "availability_zone" {
-  description = "Availability zone"
-  type        = string
-  default     = "us-east-1a"
-}
-
-variable "instance_type" {
-  description = "The type of EC2 instance"
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "key_name" {
-  description = "The name of the key pair"
-  type        = string
-  default     = "hello-world-instance"
-}
-
-variable "your_ip" {
-  description = "Your IP address for SSH access"
-  type        = string
-  default     = "125.209.112.99/32"
+provider "aws" {
+  region = "us-east-1"
 }
 
 data "aws_ami" "ubuntu" {
@@ -74,11 +39,10 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.devops_hero_vpc.id
-  cidr_block        = var.public_subnet_cidr
-  availability_zone = var.availability_zone
+  vpc_id                  = aws_vpc.devops_hero_vpc.id
+  cidr_block              = var.public_subnet_cidr
+  availability_zone       = var.availability_zone
   map_public_ip_on_launch = true
-
   tags = {
     Name = "PublicSubnet"
   }
@@ -104,12 +68,37 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_security_group" "ec2_security_group" {
   vpc_id = aws_vpc.devops_hero_vpc.id
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.your_ip]
+    cidr_blocks = [var.ssh_access_cidr]
   }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  ingress {
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -132,6 +121,8 @@ resource "aws_instance" "jenkins_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
+      echo "$${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
+      chmod 600 /tmp/private-key.pem
       echo "[jenkins]" > inventory
       echo "$(self.public_ip) ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/tmp/private-key.pem" >> inventory
       ansible-playbook -i inventory ../ansible/configure-ec2.yml
