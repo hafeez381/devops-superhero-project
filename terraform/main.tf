@@ -46,12 +46,6 @@ variable "your_ip" {
   default     = "125.209.112.99/32"
 }
 
-variable "ssh_private_key_path" {
-  description = "The path to the SSH private key for accessing the EC2 instance"
-  type        = string
-  default     = "/tmp/private-key.pem"
-}
-
 data "aws_ami" "ubuntu" {
   most_recent = true
   filter {
@@ -135,6 +129,14 @@ resource "aws_instance" "jenkins_instance" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "[jenkins]" > inventory
+      echo "$(self.public_ip) ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/tmp/private-key.pem" >> inventory
+      ansible-playbook -i inventory ../ansible/configure-ec2.yml
+    EOT
+  }
 
   tags = {
     Name = "JenkinsInstance"
