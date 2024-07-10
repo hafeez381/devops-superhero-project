@@ -33,15 +33,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-1
     
-      # Pull the latest state file
-      - name: Terraform Pull
-        working-directory: ./terraform
-        run: terraform state pull
 
       # Initialize a new or existing Terraform working directory
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
+
+      # Pull the latest state file
+      - name: Terraform Pull
+        working-directory: ./terraform
+        run: terraform state pull
 
       # Generate an execution plan for Terraform
       - name: Terraform Plan
