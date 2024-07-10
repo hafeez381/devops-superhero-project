@@ -32,21 +32,11 @@ jobs:
           aws-access-key-id: ${{ secrets.TF_USER_AWS_KEY }}
           aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-1
-
-      # Decode SSH private key and set permissions
-      - name: Decode SSH private key
-        run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.x
-
-      - name: Install Ansible
-        run: pip install ansible
-
-      - name: Set permissions for SSH private key
-        run: chmod 400 /tmp/private-key.pem
+    
+      # Pull the latest state file
+      - name: Terraform Pull
+        working-directory: ./terraform
+        run: terraform state pull
 
       # Initialize a new or existing Terraform working directory
       - name: Terraform Init
@@ -62,10 +52,26 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
-      
-      - name: Terraform Pull
-        working-directory: terraform
-        run: terraform state pull
+
+      # Save EC2 Public IP
+      - name: Save EC2 Public IP
+        id: save-ec2-ip
+        working-directory: ./terraform
+        run: |
+          echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" > $GITHUB_ENV
+
+      # Generate inventory.ini
+      - name: Generate inventory.ini
+        run: |
+          echo "[jenkins]" > ./ansible/inventory.ini
+          echo "${{ env.EC2_PUBLIC_IP }} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/tmp/private-key.pem" > ./ansible/inventory.ini
+
+      # Decode SSH private key and set permissions
+      - name: Decode SSH private key
+        run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
+
+      - name: Set permissions for SSH private key
+        run: chmod 600 /tmp/private-key.pem
 
       # Ansible configuration
       - name: Run Ansible Playbook
