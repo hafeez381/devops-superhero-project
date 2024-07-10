@@ -40,10 +40,6 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
-      # Pull the latest state file
-      - name: Terraform Pull
-        working-directory: ./terraform
-        run: terraform state pull
         
       # Generate an execution plan for Terraform
       - name: Terraform Plan
