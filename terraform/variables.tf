@@ -28,9 +28,3 @@ variable "key_name" {
   default     = "hello-world-instance"
 }
 
-
-variable "ssh_private_key" {
-  description = "The SSH private key"
-  type        = string
-  sensitive   = true
-}
