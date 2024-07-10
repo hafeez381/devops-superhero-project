@@ -51,7 +51,8 @@ jobs:
     # Applies the generated plan
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve
         env:
           TF_VAR_ssh_private_key_path: /tmp/private-key.pem
 
