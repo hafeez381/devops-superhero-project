@@ -1,6 +1,5 @@
 name: Provision t2.micro EC2
 
-
 on:
   push:
     branches: [ "main" ]
@@ -13,8 +12,8 @@ jobs:
   
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
-        run:
-          shell: bash
+      run:
+        shell: bash
 
     steps:
     # Checkout the repository to the GitHub Actions runner
@@ -32,6 +31,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-1
 
+    # Decode SSH private key and set permissions
       - name: Decode SSH private key
         run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
     
@@ -50,13 +50,13 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -input=false
 
+    # Applies the generated plan
       - name: Terraform Apply
         run: terraform apply -auto-approve
         env:
           TF_VAR_ssh_private_key_path: /tmp/private-key.pem
-          
-#      - name: Terraform destroy
-#        env:
-#          AWS_ACCESS_KEY_ID:
-#          AWS_SECRET_ACCESS_KEY:
-#        run: terraform destroy -auto-approve -input=false
+
+    # Save EC2 Public IP
+      - name: Save EC2 Public IP
+        id: ec2-ip
+        run: echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
