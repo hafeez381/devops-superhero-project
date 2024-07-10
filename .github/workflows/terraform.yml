@@ -40,18 +40,22 @@ jobs:
       
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
+        working-directory: ./terraform
         run: terraform init
 
     # Checks that all Terraform configuration files adhere to a canonical format
       - name: Terraform Format
+        working-directory: ./terraform
         run: terraform fmt -check
 
     # Generates an execution plan for Terraform
       - name: Terraform Plan
+        working-directory: ./terraform
         run: terraform plan -input=false
 
     # Applies the generated plan
       - name: Terraform Apply
+        working-directory: ./terraform
         run: terraform apply -auto-approve
         env:
           TF_VAR_ssh_private_key_path: /tmp/private-key.pem
