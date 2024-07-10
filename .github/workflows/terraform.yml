@@ -2,7 +2,7 @@ name: Provision t2.micro EC2
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main" ]
   pull_request:
   workflow_dispatch:
 
@@ -36,9 +36,17 @@ jobs:
       # Decode SSH private key and set permissions
       - name: Decode SSH private key
         run: echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install Ansible
+        run: pip install ansible
 
       - name: Set permissions for SSH private key
-        run: chmod 600 /tmp/private-key.pem
+        run: chmod 400 /tmp/private-key.pem
 
       # Initialize a new or existing Terraform working directory
       - name: Terraform Init
@@ -54,15 +62,12 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
-
-      # Save EC2 Public IP
-      - name: Save EC2 Public IP
-        id: save-ec2-ip
-        working-directory: ./terraform
-        run: |
-          echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+      
+      - name: Terraform Pull
+        working-directory: terraform
+        run: terraform state pull
 
       # Ansible configuration
       - name: Run Ansible Playbook
         working-directory: ./ansible
-        run: ansible-playbook -i ../terraform/inventory configure-ec2.yml
+        run: ansible-playbook -i inventory.ini configure-ec2.yml
