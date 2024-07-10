@@ -83,14 +83,12 @@ resource "aws_security_group" "ec2_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-
   ingress {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 
   ingress {
     from_port   = 9000
@@ -119,18 +117,11 @@ resource "aws_instance" "jenkins_instance" {
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
 
-  provisioner "local-exec" {
-    command = <<EOT
-      echo "$${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
-      chmod 400 /tmp/private-key.pem
-      echo "[jenkins]" > inventory.ini
-      echo "$(aws_instance.jenkins_instance.public_ip) ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/tmp/private-key.pem" > inventory.ini
-      ansible-playbook -i ../ansible/inventory.ini ../ansible/configure-ec2.yml
-    EOT
-  }
-
   tags = {
     Name = "JenkinsInstance"
   }
 }
 
+output "ec2_public_ip" {
+  value = aws_instance.jenkins_instance.public_ip
+}
