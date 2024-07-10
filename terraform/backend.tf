@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "devops-superhero-bucket"
-    key    = "terraforminstance.tfstate"
+    key    = "terraformstate.tfstate"
     region = "us-east-1"
   }
 }
