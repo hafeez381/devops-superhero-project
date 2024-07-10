@@ -210,6 +210,7 @@ resource "aws_instance" "devops_hero_instance" {
   instance_type = var.instance_type
   subnet_id     = aws_subnet.devops_hero_public_subnet_1.id
   key_name      = var.key_name
+
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
   tags = {
@@ -218,10 +219,11 @@ resource "aws_instance" "devops_hero_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      ansible-playbook -i '${self.public_ip},' --private-key ${var.ssh_private_key_path} ansible/configure-ec2.yml
+      ansible-playbook -i '${self.public_ip},' --private-key /tmp/private-key.pem ansible/configure-ec2.yml
     EOT
   }
 }
+
 
 
 # Output the VPC ID
