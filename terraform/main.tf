@@ -56,7 +56,7 @@ variable "your_ip" {
 variable "ssh_private_key_path" {
   description = "The path to the SSH private key for accessing the EC2 instance"
   type        = string
-  sensitive   = true
+  default     = "/tmp/private-key.pem"
 }
 
 # Fetch the most recent Ubuntu 20.04 LTS AMI
@@ -218,10 +218,11 @@ resource "aws_instance" "devops_hero_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      ansible-playbook -i '${self.public_ip},' --private-key ${var.ssh_private_key_path} configure-ec2.yml
+      ansible-playbook -i '${self.public_ip},' --private-key ${var.ssh_private_key_path} ansible/configure-ec2.yml
     EOT
   }
 }
+
 
 # Output the VPC ID
 output "vpc_id" {
