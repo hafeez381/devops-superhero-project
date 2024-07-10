@@ -77,4 +77,4 @@ jobs:
       # Ansible configuration
       - name: Run Ansible Playbook
         working-directory: ./ansible
-        run: ansible-playbook -i inventory.yml configure-ec2.yml
+        run: ansible-playbook -i inventory.ini configure-ec2.yml

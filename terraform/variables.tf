@@ -28,11 +28,6 @@ variable "key_name" {
   default     = "hello-world-instance"
 }
 
-variable "ssh_access_cidr" {
-  description = "CIDR block allowed to SSH to EC2 instances"
-  type        = string
-  default     = "0.0.0.0/0" 
-}
 
 variable "ssh_private_key" {
   description = "The SSH private key"
