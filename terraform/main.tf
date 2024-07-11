@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
   region = "us-east-1"
 }
@@ -46,24 +37,6 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "PublicSubnet"
   }
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.devops_hero_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = {
-    Name = "PublicRouteTable"
-  }
-}
-
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
 }
 
 resource "aws_security_group" "ec2_security_group" {
@@ -116,6 +89,14 @@ resource "aws_instance" "jenkins_instance" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "${var.ssh_private_key}" > /tmp/private-key.pem
+      chmod 600 /tmp/private-key.pem
+      ansible-playbook -i ${self.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
+    EOT
+  }
 
   tags = {
     Name = "JenkinsInstance"
