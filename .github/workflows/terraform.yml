@@ -34,4 +34,6 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve -var="aws_ssh_key=${secrets.AWS_SSH_KEY}"
+        env:
+          AWS_SSH_KEY: ${{ secrets.AWS_SSH_KEY }}
+        run: terraform apply -auto-approve -var="aws_ssh_key=${{ secrets.AWS_SSH_KEY }}"
