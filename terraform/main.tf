@@ -43,6 +43,8 @@ resource "aws_subnet" "public" {
   }
 }
 
+
+
 resource "aws_security_group" "ec2_security_group" {
   vpc_id = aws_vpc.devops_hero_vpc.id
 
@@ -50,28 +52,7 @@ resource "aws_security_group" "ec2_security_group" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 9000
-    to_port     = 9000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Open for testing, restrict in production
   }
 
   egress {
@@ -86,6 +67,7 @@ resource "aws_security_group" "ec2_security_group" {
   }
 }
 
+
 resource "aws_instance" "jenkins_instance" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
@@ -94,23 +76,23 @@ resource "aws_instance" "jenkins_instance" {
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
 
- # provisioner "remote-exec" {
-  #  connection {
-    #  type        = "ssh"
-   #   user        = "ubuntu"
-    #  private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
-     # host        = self.public_ip
-    #}
+  provisioner "remote-exec" {
+    connection {
+      host        = "${aws_instance.jenkins_instance.public_ip}"
+      user        = "ubuntu"
+      private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
+    }
 
-   # inline = [
-    #  "sudo apt-get update -y",
-     # "sudo apt-get install -y python3-pip",
-     # "pip3 install ansible"
-   # ]
- # }
+    inline = [
+      "sudo apt-get update -y",
+      "sudo apt-get install -y python3-pip",
+      "pip3 install ansible"
+    ]
+  }
 
   provisioner "local-exec" {
     command = <<EOT
+      sleep 80  # Add a delay to allow instance to initialize
       echo "${data.aws_secretsmanager_secret_version.ssh_private_key.secret_string}" > /tmp/private-key.pem
       chmod 400 /tmp/private-key.pem
       ansible-playbook -i ${aws_instance.jenkins_instance.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
