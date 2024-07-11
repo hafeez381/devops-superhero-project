@@ -43,6 +43,22 @@ resource "aws_subnet" "public" {
   }
 }
 
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.devops_hero_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  tags = {
+    Name = "PublicRouteTable"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
 resource "aws_security_group" "ec2_security_group" {
   vpc_id = aws_vpc.devops_hero_vpc.id
 
@@ -96,7 +112,7 @@ resource "aws_instance" "jenkins_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      sleep 120  # Increase the delay to allow instance to initialize
+      sleep 180  # Increase the delay to allow instance to initialize
       echo "${data.aws_secretsmanager_secret_version.ssh_private_key.secret_string}" | tr -d '\\n' | sed 's/\\s/\\n/g' > /tmp/private-key.pem
       chmod 400 /tmp/private-key.pem
       ansible-playbook -i ${aws_instance.jenkins_instance.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
