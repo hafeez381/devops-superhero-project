@@ -96,7 +96,7 @@ resource "aws_instance" "jenkins_instance" {
 
  # provisioner "remote-exec" {
   #  connection {
-      type        = "ssh"
+    #  type        = "ssh"
    #   user        = "ubuntu"
     #  private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
      # host        = self.public_ip
