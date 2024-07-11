@@ -8,22 +8,15 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash
-
     steps:
-      # Checkout the repository to the GitHub Actions runner
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Install the latest version of Terraform CLI
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: '1.0.3'
 
-      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -31,22 +24,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-1
 
-      # Initialize a new or existing Terraform working directory
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
 
-      # Pull the latest state file
-      - name: Terraform Pull
-        working-directory: ./terraform
-        run: terraform state pull
-
-      # Generate an execution plan for Terraform
       - name: Terraform Plan
         working-directory: ./terraform
         run: terraform plan -input=false
 
-      # Apply the generated plan
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve -var="aws_ssh_key=${secrets.AWS_SSH_KEY}"
