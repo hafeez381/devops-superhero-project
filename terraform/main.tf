@@ -90,6 +90,7 @@ resource "aws_instance" "jenkins_instance" {
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
 
+
 provisioner "local-exec" {
   command = <<EOT
     echo "${var.aws_ssh_key}" > /tmp/private-key.pem
