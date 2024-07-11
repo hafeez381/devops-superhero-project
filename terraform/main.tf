@@ -92,7 +92,7 @@ resource "aws_instance" "jenkins_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "${var.ssh_private_key}" > /tmp/private-key.pem
+      echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/private-key.pem
       chmod 600 /tmp/private-key.pem
       ansible-playbook -i ${self.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
     EOT
