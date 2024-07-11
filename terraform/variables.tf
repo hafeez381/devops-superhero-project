@@ -27,3 +27,8 @@ variable "key_name" {
   type        = string
   default     = "hello-world-instance"
 }
+
+variable "aws_ssh_key" {
+  description = "AWS SSH private key"
+  type        = string
+}
