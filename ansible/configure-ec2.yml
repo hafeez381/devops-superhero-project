@@ -1,5 +1,5 @@
 - name: Configure EC2 instance
-  hosts: all
+  hosts: "{{ ec2_public_ip }}"
   become: yes
   tasks:
     - name: Update and upgrade apt packages
