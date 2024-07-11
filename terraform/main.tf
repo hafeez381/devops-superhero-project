@@ -94,26 +94,26 @@ resource "aws_instance" "jenkins_instance" {
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
 
-  provisioner "remote-exec" {
-    connection {
+ # provisioner "remote-exec" {
+  #  connection {
       type        = "ssh"
-      user        = "ubuntu"
-      private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
-      host        = self.public_ip
-    }
+   #   user        = "ubuntu"
+    #  private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
+     # host        = self.public_ip
+    #}
 
-    inline = [
-      "sudo apt-get update -y",
-      "sudo apt-get install -y python3-pip",
-      "pip3 install ansible"
-    ]
-  }
+   # inline = [
+    #  "sudo apt-get update -y",
+     # "sudo apt-get install -y python3-pip",
+     # "pip3 install ansible"
+   # ]
+ # }
 
   provisioner "local-exec" {
     command = <<EOT
       echo "${data.aws_secretsmanager_secret_version.ssh_private_key.secret_string}" > /tmp/private-key.pem
       chmod 400 /tmp/private-key.pem
-      ansible-playbook -i ${self.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
+      ansible-playbook -i ${aws_instance.jenkins_instance.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
     EOT
   }
 
