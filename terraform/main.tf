@@ -53,6 +53,27 @@ resource "aws_security_group" "ec2_security_group" {
     cidr_blocks = ["0.0.0.0/0"] # Open for testing, restrict in production
   }
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -75,8 +96,8 @@ resource "aws_instance" "jenkins_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      sleep 80  # Add a delay to allow instance to initialize
-      echo "${data.aws_secretsmanager_secret_version.ssh_private_key.secret_string}" > /tmp/private-key.pem
+      sleep 120  # Increase the delay to allow instance to initialize
+      echo "${data.aws_secretsmanager_secret_version.ssh_private_key.secret_string}" | tr -d '\\n' | sed 's/\\s/\\n/g' > /tmp/private-key.pem
       chmod 400 /tmp/private-key.pem
       ansible-playbook -i ${aws_instance.jenkins_instance.public_ip}, --private-key /tmp/private-key.pem -u ubuntu ../ansible/configure-ec2.yml
     EOT
@@ -85,4 +106,8 @@ resource "aws_instance" "jenkins_instance" {
   tags = {
     Name = "JenkinsInstance"
   }
+}
+
+output "ec2_public_ip" {
+  value = aws_instance.jenkins_instance.public_ip
 }
