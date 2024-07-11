@@ -43,8 +43,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-
-
 resource "aws_security_group" "ec2_security_group" {
   vpc_id = aws_vpc.devops_hero_vpc.id
 
@@ -52,7 +50,7 @@ resource "aws_security_group" "ec2_security_group" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Open for testing, restrict in production
+    cidr_blocks = ["0.0.0.0/0"] # Open for testing, restrict in production
   }
 
   egress {
@@ -67,7 +65,6 @@ resource "aws_security_group" "ec2_security_group" {
   }
 }
 
-
 resource "aws_instance" "jenkins_instance" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
@@ -75,20 +72,6 @@ resource "aws_instance" "jenkins_instance" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   associate_public_ip_address = true
-
-  provisioner "remote-exec" {
-    connection {
-      host        = "${aws_instance.jenkins_instance.public_ip}"
-      user        = "ubuntu"
-      private_key = data.aws_secretsmanager_secret_version.ssh_private_key.secret_string
-    }
-
-    inline = [
-      "sudo apt-get update -y",
-      "sudo apt-get install -y python3-pip",
-      "pip3 install ansible"
-    ]
-  }
 
   provisioner "local-exec" {
     command = <<EOT
