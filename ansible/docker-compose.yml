@@ -24,6 +24,16 @@ services:
     networks:
       - devops
 
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonarqube
+    networks:
+      - devops
+
 networks:
   devops:
 
