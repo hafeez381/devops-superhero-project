@@ -24,11 +24,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-1
       
-      - name: Install Ansible
-        run: |
-            sudo apt-get update
-            sudo apt-get install -y python3-pip
-            pip3 install ansible
+      # - name: Install Ansible
+      #   run: |
+      #       sudo apt-get update
+      #       sudo apt-get install -y python3-pip
+      #       pip3 install ansible
 
       - name: Terraform Init
         working-directory: ./terraform
