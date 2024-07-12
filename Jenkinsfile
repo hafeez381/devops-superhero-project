@@ -18,9 +18,9 @@ pipeline {
         stage('Install R and Dependencies') {
             steps {
                 sh '''
-                sudo apt-get update
-                sudo apt-get install -y r-base
-                sudo R -e "install.packages(c('ggplot2', 'mosaic', 'dplyr'), repos='http://cran.rstudio.com/')"
+                apt-get update
+                apt-get install -y r-base
+                R -e "install.packages(c('ggplot2', 'mosaic', 'dplyr'), repos='http://cran.rstudio.com/')"
                 '''
             }
         }
@@ -60,3 +60,4 @@ pipeline {
         }
     }
 }
+
