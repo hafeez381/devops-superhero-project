@@ -1,0 +1,60 @@
+---
+- name: Docker Setup
+  hosts: localhost
+  connection: local
+  become: true
+  become_method: sudo
+
+  tasks:
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
+        state: present
+
+    # for security
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    # package management
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+    
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Add user to docker group
+      user:
+        name: tk-lpt-0399
+        groups: docker
+        append: yes
+
+    - name: Copy Docker Compose file
+      copy:
+        src: docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
+
+    - name: Deploy Docker containers
+      command: docker-compose -f /home/ubuntu/docker-compose.yml up -d
