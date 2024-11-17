@@ -28,14 +28,13 @@ The Terraform script is divided into multiple files which define the AWS resourc
 2. `variables.tf`: This file defines the variables used across the Terraform configuration, such as CIDR blocks for the VPC and subnet, availability zones, and instance types.
 3. `main.tf`: The main Terraform configuration file defines the infrastructure as code. It includes resources for provisioning an AWS VPC, public subnet, internet gateway, security group, and EC2 instance.
 
-  The script performs the following tasks:
-    - Defines the AWS region (`us-east-1`).
-    - Retrieves an SSH private key stored in AWS Secrets Manager.
-    - Fetches the most recent Ubuntu AMI from AWS.
-    - Creates a VPC with the CIDR block defined in `variables.tf`.
-    - Defines a public subnet and associates it with the VPC and the internet gateway.
-    - Opens ports for SSH (22), HTTP (80), Jenkins (8080), and other necessary services.
-    - Deploys a `t2.micro` EC2 instance using the Ubuntu AMI and connects it to the created security group and subnet.
+The script performs the following tasks:
+  - Defines the AWS region (`us-east-1`).
+  - Retrieves an SSH private key stored in AWS Secrets Manager.
+  - Creates a VPC with the CIDR block defined in `variables.tf`.
+  - Defines a public subnet and associates it with the VPC and the internet gateway.
+  - Opens ports for SSH (22), HTTP (80), Jenkins (8080), and other necessary services.
+  - Deploys a `t2.micro` EC2 instance using the Ubuntu AMI and connects it to the created security group and subnet.
 
 ---------------------------------------------------------------------
 
